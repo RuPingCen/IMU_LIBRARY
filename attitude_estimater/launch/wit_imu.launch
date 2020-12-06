@@ -1,0 +1,13 @@
+<launch>
+
+  <node pkg="pose_estimate" type="pose_estimate" name="pose_estimate" output="screen">
+ 	
+	<param name="sub_imu_topic" value="/wit/imu" type="str" />
+	<param name="sub_mag_topic" value="/wit/mag" type="str" />
+	<param name="sub_gps_topic" value="/wit/gps" type="str" />
+	<param name="hz" value="100" type="int" />
+	<param name="use_mag" value="true" type="bool" />
+  </node>
+
+
+</launch>
