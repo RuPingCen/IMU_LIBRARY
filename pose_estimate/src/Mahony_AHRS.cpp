@@ -25,8 +25,8 @@ namespace IMU
 		q = Eigen::Vector4d(0,0,0,1); // x y z w
 		mbInitFilter = false;
 
-	uint16_t samplingrate =100;
-	uint16_t cutoff_frequence =50;
+	uint16_t samplingrate =200;
+	uint16_t cutoff_frequence =90;
 	F_LowPass.setup(samplingrate,cutoff_frequence);
 	cutoff_frequence =1;
 	F_HighPass.setup(samplingrate,cutoff_frequence);
@@ -228,15 +228,23 @@ namespace IMU
 		vy = 2*(q0q1 + q2q3);
 		vz = q0q0 - q1q1 - q2q2 + q3q3;
 
+		double acc_norm = norm;
+		acc_norm = F_LowPass.filter(acc_norm);
+		if(acc_norm<0) acc_norm= -acc_norm;
+
+		acc_norm = F_HighPass.filter(acc_norm);
+		if(acc_norm<0) acc_norm= -acc_norm;
+ 
 		uint8_t stationary = 0;
-		if(norm<1.03) //	表示平稳状态
+		if(norm<1.026) //	表示平稳状态
 		{
 			stationary = 1;
-			cout<<"norm: " << norm << "   ";
 		}
 		else
 			stationary= 0;
 			
+		cout<<"norm: " << norm << "  acc_norm "<<acc_norm<<"  ";
+
 		if(mx == 0 && my == 0 && mz == 0)
 		{
 			ex = (ay*vz - az*vy);
