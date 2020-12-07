@@ -47,11 +47,10 @@ public:
 private:
     Eigen::Vector3d gyro, acc, mag;
 	bool mbInitFilter;
-	 
+	int miCounter;
 
 	double Kp, Ki,deltaT; //四元数互补滤波增益系数，积分系数 和积分时间
 	Eigen::Vector3d Integ_angular;
-
 	Eigen::Vector4d q; // [qx qy qz qw]
 
 	bool mbStopped;

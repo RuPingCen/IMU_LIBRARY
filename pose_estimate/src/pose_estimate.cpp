@@ -66,7 +66,12 @@ uint32_t seq_counter=0;
 ros::Subscriber sub_imu,sub_mag,sub_gps;
 ros::Publisher debug_pub;
 
-
+enum Algorithm
+{
+	EKF=1,  
+	Mahony,
+	Madgwick	
+};
 typedef struct
 {
 	float 	ax,ay,az;
@@ -96,9 +101,10 @@ void sub_gps_callback(const sensor_msgs::NavSatFix::ConstPtr gps_msg);
 int main(int argc,char** argv)
 {
 	chrono::steady_clock::time_point t_now,t_last; 
-	string sub_imu_topic,sub_mag_topic,sub_gps_topic;
+	string sub_imu_topic,sub_mag_topic,sub_gps_topic,algorithm;
 	bool use_mag = false;
-
+	uint8_t use_algorithm = Madgwick;
+ 
 	ros::init(argc, argv, "pose_estimate");
 	ros::NodeHandle n("~");
 
@@ -106,8 +112,10 @@ int main(int argc,char** argv)
 	n.param<std::string>("sub_imu_topic", sub_imu_topic, "/imu");
 	n.param<std::string>("sub_mag_topic", sub_mag_topic, "/mag");
 	n.param<std::string>("sub_gps_topic", sub_gps_topic, "/gps");
+	n.param<std::string>("algorithm", algorithm, "");
 	n.param<bool>("use_mag", use_mag, false);
-
+	 
+		
 	sub_imu = n.subscribe(sub_imu_topic, 10, sub_imu_callback);
 	sub_mag = n.subscribe(sub_mag_topic, 10, sub_mag_callback);
 	//sub_gps = n.subscribe(sub_gps_topic, 10, sub_gps_callback);
@@ -117,13 +125,23 @@ int main(int argc,char** argv)
 	ROS_INFO_STREAM("sub_mag_topic:   "<<sub_mag_topic);
 	ROS_INFO_STREAM("sub_gps_topic:   "<<sub_gps_topic);  
 	ROS_INFO_STREAM("use_mag:   "<<use_mag); 
+	ROS_INFO_STREAM("algorithm:   "<<algorithm); 
+
+	if(algorithm == "EKF")
+		use_algorithm = EKF;
+	else if(algorithm == "Mahony")
+		use_algorithm = Mahony;	  
+	else if(algorithm == "Madgwick")
+		use_algorithm = Madgwick;
+	else ;
+ 
 
 	int hz =200;
 	ros::Rate loop_rate(hz);
 
 	IMU::EKF_AHRS ekf_ahrs;
-	IMU::Mahony_AHRS mahony_ahrs(Eigen::Vector2d(20.0, 0.005), 0.005);
-	IMU::Madgwick_AHRS madgwick_ahrs(100, 0.1);
+	IMU::Mahony_AHRS mahony_ahrs(Eigen::Vector2d(4.5, 0.002), 0.005);
+	IMU::Madgwick_AHRS madgwick_ahrs(256, 0.1);
 	t_last = chrono::steady_clock::now(); 
 	t_now = chrono::steady_clock::now(); 
     while(ros::ok())
@@ -149,9 +167,13 @@ int main(int argc,char** argv)
 				//cout<<" cost time: "<<dt<<" s ."<<endl; 
 				t_last = t_now; 
 
-				//ekf_ahrs.Run(dt,gyro,acc,mag);
-				mahony_ahrs.Run(dt,gyro,acc,mag);
-				//madgwick_ahrs.Run(dt,gyro,acc,mag);
+				if(use_algorithm == EKF)
+					ekf_ahrs.Run(dt,gyro,acc,mag);
+				else if(use_algorithm == Mahony)
+					mahony_ahrs.Run(dt,gyro,acc,mag);
+				else if(use_algorithm == Madgwick)
+					madgwick_ahrs.Run(dt,gyro,acc,mag);
+				else;
 			} 
 		 }
 		else
@@ -170,12 +192,25 @@ int main(int argc,char** argv)
 				dt = time_used.count();
 				if(dt > 0.015)
 					dt=0.015;
-				 
-				mahony_ahrs.Run(dt,gyro,acc);					
+
+				if(use_algorithm == EKF)
+					ekf_ahrs.Run(dt,gyro,acc);
+				else if(use_algorithm == Mahony)
+					mahony_ahrs.Run(dt,gyro,acc);
+				else if(use_algorithm == Madgwick)
+					madgwick_ahrs.Run(dt,gyro,acc);
+				else;				
 			}
 		}
 
-		Eigen::Vector4d dq_imu  = mahony_ahrs.getQuaternion();
+		Eigen::Vector4d dq_imu;
+		if(use_algorithm == EKF)
+			dq_imu = ekf_ahrs.getQuaternion();
+		else if(use_algorithm == Mahony)
+			dq_imu = mahony_ahrs.getQuaternion();
+		else if(use_algorithm == Madgwick)
+			dq_imu = madgwick_ahrs.getQuaternion();
+		else; 
 		sensor_msgs::Imu debug_msg;
 		
 		ros::Time times_now = ros::Time::now();

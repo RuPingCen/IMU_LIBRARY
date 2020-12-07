@@ -16,7 +16,7 @@ EKF_AHRS::EKF_AHRS():
 {
 	mbFlagInit =0x00;
 
-	cout << "System initialization!" << endl;
+	cout << "EKF_AHRS initialization!" << endl;
 
 	q = Eigen::Vector4d(0,0,0,1) ;
 
@@ -177,7 +177,7 @@ bool EKF_AHRS::Run(const double& dt,const Eigen::Vector3d& gyro,
 	P = (Matrix<double, 7, 7>::Identity()-K*H_thin)*P;
 	P= (P +P.transpose()) / 2.0;
 
-	quaternionToEuler(q);
+	//quaternionToEuler(q);
 	//cout<< "delta_x: " << delta_x.transpose()<<endl;
 	//cout<< "q update: " << q.transpose()<<endl;
 	//cout<< "q: " << q.transpose()<<endl;
@@ -259,7 +259,7 @@ bool EKF_AHRS::Run(const double& dt,const Eigen::Vector3d& gyro,
 	P = (Matrix<double, 7, 7>::Identity()-K*H_thin)*P;
 	P= (P +P.transpose()) / 2.0;
 
-	quaternionToEuler(q);
+	//quaternionToEuler(q);
   
 	return true;
 }

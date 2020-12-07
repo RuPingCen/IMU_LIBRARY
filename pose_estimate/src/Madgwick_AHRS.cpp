@@ -13,6 +13,7 @@ namespace IMU
 		q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;	 
 		q = Eigen::Vector4d(0,0,0,1); // x y z w
 		mbInitFilter = false;
+		cout<<"Madgwick_AHRS  "<<" sampleFreq: "<<sampleFreq<<"  beta: "<<beta<<endl;
 	}
 	void Madgwick_AHRS::Madgwick_Init(const Eigen::Vector3d& acc_m,const Eigen::Vector3d& mag_m)
 	{
@@ -72,7 +73,7 @@ namespace IMU
 		q(2) = q3;
 		q(3) = q0; 
 
-		getEulerAngle();
+		//getEulerAngle();
 		return q;
 	} 
 	/**
@@ -96,7 +97,7 @@ namespace IMU
 		q(2) = q3;
 		q(3) = q0;
 
-		getEulerAngle();
+		//getEulerAngle();
 		return q;
 	}
 

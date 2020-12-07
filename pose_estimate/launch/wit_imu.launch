@@ -7,6 +7,8 @@
 	<param name="sub_gps_topic" value="/wit/gps" type="str" />
 	<param name="hz" value="100" type="int" />
 	<param name="use_mag" value="true" type="bool" />
+	<!-- EKF Mahony Madgwick /--> 
+	<param name="algorithm" value="Madgwick" type="str" /> 
   </node>
 
 
