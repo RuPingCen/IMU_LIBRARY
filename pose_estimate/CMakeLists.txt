@@ -191,7 +191,13 @@ target_link_libraries(pose_estimate
 	iir
 	${catkin_LIBRARIES}
 )
- 
+
+add_executable(ekf2_test test/ekf2_test.cpp src/EKF2_AHRS.cpp src/Convert.cpp)
+
+target_link_libraries(ekf2_test
+	iir
+	${catkin_LIBRARIES}
+)
 ## Declare a C++ library
 # add_library(save_imagefrom_kinect2
 #   src/${PROJECT_NAME}/save_imagefrom_kinect2.cpp
