@@ -6,9 +6,9 @@
 	<param name="sub_mag_topic" value="/imu/mag" type="str" />
 	<param name="sub_gps_topic" value="/gps" type="str" />
 	<param name="hz" value="100" type="int" />
-	<param name="use_mag" value="true" type="bool" />
+	<param name="use_mag" value="false" type="bool" />
 	<!-- EKF Mahony Madgwick /--> 
-	<param name="algorithm" value="EKF" type="str" /> 
+	<param name="algorithm" value="Madgwick" type="str" /> 
   </node>
 
 

@@ -140,8 +140,8 @@ int main(int argc,char** argv)
 	ros::Rate loop_rate(hz);
 
 	IMU::EKF_AHRS ekf_ahrs;
-	IMU::Mahony_AHRS mahony_ahrs(Eigen::Vector2d(4.5, 0.002), 0.005);
-	IMU::Madgwick_AHRS madgwick_ahrs(256, 0.1);
+	IMU::Mahony_AHRS mahony_ahrs(Eigen::Vector2d(20, 0.01), 0.005);
+	IMU::Madgwick_AHRS madgwick_ahrs(512, 0.2);
 	t_last = chrono::steady_clock::now(); 
 	t_now = chrono::steady_clock::now(); 
     while(ros::ok())
@@ -164,7 +164,7 @@ int main(int argc,char** argv)
 				dt = time_used.count();
 				if(dt > 0.015)
 					dt=0.015;
-				//cout<<" cost time: "<<dt<<" s ."<<endl; 
+				cout<<" calculate pose with magnet, cost time: "<<dt<<" s ."<<endl; 
 				t_last = t_now; 
 
 				if(use_algorithm == EKF)

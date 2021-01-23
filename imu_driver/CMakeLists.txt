@@ -155,6 +155,12 @@ include_directories(
 )
 
  
+add_executable(mick_imu src/mick_imu.cpp)
+
+target_link_libraries(mick_imu
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+)
 
 add_executable(wit_imu src/wit_imu.cpp)
 

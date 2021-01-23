@@ -241,7 +241,7 @@ bool EKF_AHRS::Run(const double& dt,const Eigen::Vector3d& gyro,
  
  
 	Eigen::Matrix<double, 3, 1> r_thin;
-	r_thin.block<3,1>(0,0)= acc_m - R_bw* Eigen::Vector3d(0, 0, 1);
+	r_thin.block<3,1>(0,0)= 0.5*(acc_m - R_bw* Eigen::Vector3d(0, 0, 1));
  
 
 	Eigen::MatrixXd S = H_thin*P*H_thin.transpose() + R2;

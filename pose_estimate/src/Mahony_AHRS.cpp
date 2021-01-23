@@ -114,11 +114,11 @@ namespace IMU
 			const Eigen::Vector3d& acc_m,const Eigen::Vector3d& mag_m)
 	{
 		deltaT = dt;
-		// gyro = gyro_m;
+		 gyro = gyro_m;
 		// acc = acc_m;
 		// mag = mag_m;
 		NewValues(gyro_m, acc_m, mag_m);
-		gyro = Eigen::Vector3d(IMU_FIFO[3][IMU_FIFO_Length],IMU_FIFO[4][IMU_FIFO_Length],IMU_FIFO[5][IMU_FIFO_Length]);
+		//gyro = Eigen::Vector3d(IMU_FIFO[3][IMU_FIFO_Length],IMU_FIFO[4][IMU_FIFO_Length],IMU_FIFO[5][IMU_FIFO_Length]);
 		acc = Eigen::Vector3d(IMU_FIFO[0][IMU_FIFO_Length],IMU_FIFO[1][IMU_FIFO_Length],IMU_FIFO[2][IMU_FIFO_Length]);
 		mag = Eigen::Vector3d(IMU_FIFO[6][IMU_FIFO_Length],IMU_FIFO[7][IMU_FIFO_Length],IMU_FIFO[8][IMU_FIFO_Length]);
 
@@ -158,7 +158,7 @@ namespace IMU
 		error_acc = R_bw*Eigen::Vector3d(0,0,1);
 		error_acc = acc.cross(error_acc);//向量叉乘
 		//error_acc = skewSymmetric(acc)*error_acc;
-		error_sum = error_acc;
+		error_sum = 0.5*error_acc;
 
 		if(mag.norm() > 1e-6)
 		{
