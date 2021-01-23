@@ -54,7 +54,7 @@ using namespace Eigen;
  
 
 static int data_length = 100;
-
+int show_message=0;
 boost::asio::serial_port* serial_port = 0;
  
 static uint8_t data_raw[200];
@@ -113,17 +113,19 @@ int main(int argc,char** argv)
 	n.param<int>("buad", buad, 115200);
 	n.param<int>("time_out", time_out, 1000);
 	n.param<int>("hz", hz, 200);
+	n.param<int>("show_message", show_message, 1);
 
  
 	ROS_INFO_STREAM("dev:   "<<dev);
 	ROS_INFO_STREAM("buad:   "<<buad);
 	ROS_INFO_STREAM("time_out:   "<<time_out);
 	ROS_INFO_STREAM("hz:   "<<hz);
+	ROS_INFO_STREAM("show_message:   "<<show_message);
 	  
 	ros::Rate loop_rate(hz);
-	pub = n.advertise<sensor_msgs::Imu>("/wit/imu", 1);
-	pub_mag = n.advertise<sensor_msgs::MagneticField>("/wit/mag", 1);
-	pub_gps = n.advertise<sensor_msgs::NavSatFix>("/wit/gps", 1);
+	pub = n.advertise<sensor_msgs::Imu>("/mick/imu", 1);
+	pub_mag = n.advertise<sensor_msgs::MagneticField>("/mick/mag", 1);
+	//pub_gps = n.advertise<sensor_msgs::NavSatFix>("/wit/gps", 1);
 
 	 
 
@@ -257,7 +259,7 @@ for(int kk = 0; kk < data_length - 1; )
 					mick_imu.IMUFlag =0x01;
 					flag = 0x01;
  
-					if(1)
+					if(show_message)
 					{
 						 ROS_INFO_STREAM("roll: "<<mick_imu.roll<<"\t pitch: "<<mick_imu.pitch<<"\t yaw: "<<mick_imu.yaw);
 						
@@ -336,12 +338,12 @@ void publish_IMU_Raw_Data(int flag)
 	msg_mag.header.frame_id = msg.header.frame_id;
 	pub_mag.publish(msg_mag);
 
-	msg_gps.header.stamp = ros::Time::now();
-	msg_gps.header.frame_id = frame_id;
-	msg_gps.latitude = mick_imu.GPSLat;
-	msg_gps.longitude = mick_imu.GPSLon;
-	msg_gps.altitude = mick_imu.high;
-	pub_gps.publish(msg_gps);
+	//msg_gps.header.stamp = ros::Time::now();
+	//msg_gps.header.frame_id = frame_id;
+	//msg_gps.latitude = mick_imu.GPSLat;
+	//msg_gps.longitude = mick_imu.GPSLon;
+	//msg_gps.altitude = mick_imu.high;
+	//pub_gps.publish(msg_gps);
 
 }
   
