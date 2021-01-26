@@ -198,6 +198,20 @@ target_link_libraries(ekf2_test
 	iir
 	${catkin_LIBRARIES}
 )
+
+
+add_executable(mahony_dynamic_Kp_test test/mahony_dynamic_Kp_test.cpp src/Mahony_AHRS.cpp src/Convert.cpp)
+target_link_libraries(mahony_dynamic_Kp_test
+	iir
+	${catkin_LIBRARIES}
+)
+
+add_executable(ekf_dynamic_R_test test/ekf_dynamic_R_test.cpp src/EKF_AHRS.cpp src/Convert.cpp)
+target_link_libraries(ekf_dynamic_R_test
+	iir
+	${catkin_LIBRARIES}
+)
+
 ## Declare a C++ library
 # add_library(save_imagefrom_kinect2
 #   src/${PROJECT_NAME}/save_imagefrom_kinect2.cpp

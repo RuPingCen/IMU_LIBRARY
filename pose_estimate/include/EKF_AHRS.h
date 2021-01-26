@@ -8,7 +8,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <eigen3/Eigen/Geometry> 
- 
+
+#include "Iir.h"
 
 
 using namespace std;
@@ -27,12 +28,15 @@ public:
     bool Run(const double& dt,const Eigen::Vector3d& gyro,
                 const Eigen::Vector3d& acc,const Eigen::Vector3d& mag);
 
+    bool Run2(const double& dt,const Eigen::Vector3d& gyro,
+                const Eigen::Vector3d& acc,const Eigen::Vector3d& mag);
+
     bool Run(const double& dt,const Eigen::Vector3d& gyro,
             const Eigen::Vector3d& acc);
 
     Eigen::Vector4d getQuaternion(void);
 
-    Eigen::Vector3d quaternionToEuler(const Eigen::Vector4d& q);
+    
     void Param_Change(float noise_R, float noise_Qq,float noise_Qw);
 
     void Release();
@@ -54,6 +58,10 @@ private:
     bool mbStopped;
     bool mbStopRequested;
     std::mutex mMutexStop;
+
+	//const int order = 4;
+    Iir::Butterworth::LowPass<4> F_LowPass;
+    Iir::Butterworth::HighPass<4> F_HighPass;
 };
 
 } //namespace IMU

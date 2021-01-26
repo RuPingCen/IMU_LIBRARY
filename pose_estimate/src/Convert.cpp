@@ -5,6 +5,35 @@
 namespace IMU
 {
 
+Eigen::Vector3d quaternionToEuler(const Eigen::Vector4d& q) 
+{
+    double q_x = q(0);
+    double q_y = q(1);
+    double q_z = q(2);
+    double q_w = q(3);
+
+    Eigen::Matrix<double, 3, 3> R_n2b;
+    R_n2b <<1 - 2 * (q_z *q_z + q_y * q_y), 2 * (q_x * q_y-q_w * q_z), 2 * (q_x * q_z +q_w * q_y),
+            2 * (q_x * q_y +q_w * q_z) ,    1 - 2 * (q_z *q_z + q_x * q_x),    2 * (q_y * q_z-q_w * q_x),
+            2 * (q_x * q_z-q_w * q_y),      2 * (q_y * q_z+q_w * q_x),         1 - 2 * (q_x *q_x + q_y * q_y); 
+
+    // 同样都使用RPY的旋转顺序，但是由于在东北天和北东地两个坐标系下
+    // X 和 Y轴的方向相反，因此从四元数矩阵到欧拉角的计算方法上也不同
+    // 因此存在以下两种计算方法
+    double Rad_to_Angle =57.3;
+    // double roll  = atan2(-R_n2b(2,0),R_n2b(2,2))*Rad_to_Angle;
+    // double pitch = asin(R_n2b(2,1))*Rad_to_Angle;
+    // double yaw   = -atan2(R_n2b(0,1),R_n2b(1,1))*Rad_to_Angle; 
+
+    double roll  = atan2(R_n2b(2,1),R_n2b(2,2))*Rad_to_Angle;
+    double pitch = -asin(R_n2b(2,0))*Rad_to_Angle;
+    double yaw   = atan2(R_n2b(1,0),R_n2b(0,0))*Rad_to_Angle; 
+    cout<< "ENU: roll "<<roll<<" pitch:  "<<pitch<<" yaw:  "<<yaw<<endl;
+    
+    return Eigen::Vector3d(roll,pitch,yaw);
+}
+
+
 void Vect_to_SkewMat(Vector_3 Vector, Matrix_3 &Matrix)
 {
     Matrix << 0, -Vector(2), Vector(1),

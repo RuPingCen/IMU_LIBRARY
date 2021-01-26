@@ -3,12 +3,12 @@
 
 #include "Mahony_AHRS.h"
 #include "Convert.h"
+
 #include "Iir.h"
 
 using namespace std;
-const int order = 4;
-Iir::Butterworth::LowPass<order> F_LowPass;
-Iir::Butterworth::HighPass<order> F_HighPass;
+
+
 
 #define  IMU_FIFO_Length 10
 double IMU_FIFO[9][IMU_FIFO_Length+1];
@@ -26,10 +26,11 @@ namespace IMU
 		mbInitFilter = false;
 		miCounter =0;
 
-		uint16_t samplingrate =200;
-		uint16_t cutoff_frequence =90;
+		
+		uint16_t samplingrate =100;
+		uint16_t cutoff_frequence =50;
 		F_LowPass.setup(samplingrate,cutoff_frequence);
-		cutoff_frequence =1;
+		cutoff_frequence =2;
 		F_HighPass.setup(samplingrate,cutoff_frequence);
 
 		cout<<"Mahony_AHRS  Kp: "<<Kp<<"  Ki:"<<Ki<<endl;
@@ -146,7 +147,92 @@ namespace IMU
 		return q;
 	}
 
+Eigen::Vector4d Mahony_AHRS::Run2(const double& dt,const Eigen::Vector3d& gyro_m,
+			const Eigen::Vector3d& acc_m,const Eigen::Vector3d& mag_m)
+	{
+		deltaT = dt;
+		 gyro = gyro_m;
+		// acc = acc_m;
+		// mag = mag_m;
+		NewValues(gyro_m, acc_m, mag_m);
+		//gyro = Eigen::Vector3d(IMU_FIFO[3][IMU_FIFO_Length],IMU_FIFO[4][IMU_FIFO_Length],IMU_FIFO[5][IMU_FIFO_Length]);
+		acc = Eigen::Vector3d(IMU_FIFO[0][IMU_FIFO_Length],IMU_FIFO[1][IMU_FIFO_Length],IMU_FIFO[2][IMU_FIFO_Length]);
+		mag = Eigen::Vector3d(IMU_FIFO[6][IMU_FIFO_Length],IMU_FIFO[7][IMU_FIFO_Length],IMU_FIFO[8][IMU_FIFO_Length]);
+
+		//mag = Eigen::Vector3d(0,0,0);
+		if(mbInitFilter == false || miCounter<15)
+		{
+			
+			if(miCounter<15)
+			{
+				NewValues(gyro_m, acc_m, mag_m);
+			}
+			else
+			{
+				Mahony_Init(acc_m,mag_m);
+				mbInitFilter = true;
+			}
+			miCounter++;			
+			return q;
+		}
+
+		//Mahony_Estimate();
+		//getEulerAngle();
+		Mahony_Estimate2();
+		
+		return q;
+	}
+
 	void Mahony_AHRS::Mahony_Estimate(void)
+	{
+ 
+ 		acc.normalize(); 
+		 
+		q.normalize();
+		Eigen::Matrix<double, 3, 3> R_bw = quaternionToRotation(q);
+		
+		Vector_3 error_acc, error_mag, mag_ned, error_sum;
+		error_acc = R_bw*Eigen::Vector3d(0,0,1);
+		error_acc = acc.cross(error_acc);//向量叉乘
+		//error_acc = skewSymmetric(acc)*error_acc;
+		error_sum = error_acc;
+
+		if(mag.norm() > 1e-6)
+		{
+			mag.normalize(); 
+			mag_ned = R_bw.transpose()*mag;
+			error_mag << sqrt(mag_ned(0)*mag_ned(0) + mag_ned(1)*mag_ned(1)), 0, mag_ned(2);
+			error_mag = R_bw*error_mag;
+			error_mag = mag.cross(error_mag);
+			//error_mag = skewSymmetric(mag)*error_mag;
+			error_sum += error_mag;
+		}
+   
+		if(error_sum(0) != 0.0f && error_sum(1) != 0.0f && error_sum(2) != 0.0f)
+		{	
+			 
+				// get the modify value from the error
+				Integ_angular = Integ_angular + 0.5*Ki*deltaT*error_sum;
+				gyro = gyro + Kp*error_sum + Integ_angular;
+			 
+			 
+		}
+ 
+		Eigen::Matrix4d Omega = Eigen::Matrix4d::Zero();
+		Omega.block<3, 3>(0, 0) = -skewSymmetric(gyro);
+		Omega.block<3, 1>(0, 3) = gyro;
+		Omega.block<1, 3>(3, 0) = -gyro;
+
+		q = (Eigen::Matrix<double, 4, 4>::Identity() +0.5*deltaT*Omega)*q;
+		q.normalize();
+			 
+	}
+	/**
+	 *@ function 利用加速度的观察信息 动态调整Kp的值 
+	 * 			 实现变权重的姿态融合算法
+	 * 
+	 */
+	void Mahony_AHRS::Mahony_Estimate2(void)
 	{
 		double acc_norm = acc.norm();
  		acc.normalize(); 
@@ -158,7 +244,7 @@ namespace IMU
 		error_acc = R_bw*Eigen::Vector3d(0,0,1);
 		error_acc = acc.cross(error_acc);//向量叉乘
 		//error_acc = skewSymmetric(acc)*error_acc;
-		error_sum = 0.5*error_acc;
+		error_sum = error_acc;
 
 		if(mag.norm() > 1e-6)
 		{
@@ -171,23 +257,23 @@ namespace IMU
 			error_sum += error_mag;
 		}
  
-		//acc_norm = F_LowPass.filter(acc_norm);
-		//if(acc_norm<0) acc_norm= -acc_norm;
+		acc_norm = F_LowPass.filter(acc_norm);
+		if(acc_norm<0) acc_norm= -acc_norm;
 
-		//acc_norm = F_HighPass.filter(acc_norm);
-		//if(acc_norm<0) acc_norm= -acc_norm;
+		acc_norm = F_HighPass.filter(acc_norm);
+		if(acc_norm<0) acc_norm= -acc_norm;
  
-		uint8_t stationary = 0;
+		uint8_t stationary = 1;
 		
-		if(acc_norm<1.005*9.8) //	表示平稳状态
+		if(acc_norm<1.0015*9.8) //	表示平稳状态
 		{
-			//cout<<"acc_norm: "<<acc_norm<<endl;
 			stationary = 1;
 		}
 		else
+		{
 			stationary= 0;
-	   
-		
+		}
+
 		if(error_sum(0) != 0.0f && error_sum(1) != 0.0f && error_sum(2) != 0.0f)
 		{	
 			if(stationary == 1)
@@ -198,9 +284,15 @@ namespace IMU
 			}
 			else
 			{
+				cout<<"acc_norm: "<<acc_norm<<endl;
+				
 				// get the modify value from the error
 				Integ_angular = Integ_angular + 0.5*Ki*deltaT*error_sum;
-				gyro = gyro + Integ_angular;		 
+
+				//gyro = gyro + Integ_angular;		
+
+				float tem_Kp = Kp/(exp(acc_norm*acc_norm));
+				gyro = gyro +  tem_Kp*error_sum+Integ_angular;		 
 			}
 			 
 		}
@@ -219,7 +311,7 @@ namespace IMU
 	 * 坐标系为 北东地
 	 * 
 	 */ 
-	void Mahony_AHRS::Mahony_Estimate2(void)
+	void Mahony_AHRS::Mahony_Estimate3(void)
 	{
  
 		float gx = gyro(0);
@@ -339,33 +431,7 @@ namespace IMU
 	{
 		return q;
 	}
-	Eigen::Vector3d Mahony_AHRS::quaternionToEuler(const Eigen::Vector4d& q) 
-	{
-		double q_x = q(0);
-		double q_y = q(1);
-		double q_z = q(2);
-		double q_w = q(3);
-
-		Eigen::Matrix<double, 3, 3> R_n2b;
-		R_n2b <<1 - 2 * (q_z *q_z + q_y * q_y), 2 * (q_x * q_y-q_w * q_z), 2 * (q_x * q_z +q_w * q_y),
-				2 * (q_x * q_y +q_w * q_z) ,    1 - 2 * (q_z *q_z + q_x * q_x),    2 * (q_y * q_z-q_w * q_x),
-				2 * (q_x * q_z-q_w * q_y),      2 * (q_y * q_z+q_w * q_x),         1 - 2 * (q_x *q_x + q_y * q_y); 
-
-		// 同样都使用RPY的旋转顺序，但是由于在东北天和北东地两个坐标系下
-		// X 和 Y轴的方向相反，因此从四元数矩阵到欧拉角的计算方法上也不同
-		// 因此存在以下两种计算方法
-		double Rad_to_Angle =57.3;
-		// double roll  = atan2(-R_n2b(2,0),R_n2b(2,2))*Rad_to_Angle;
-		// double pitch = asin(R_n2b(2,1))*Rad_to_Angle;
-		// double yaw   = -atan2(R_n2b(0,1),R_n2b(1,1))*Rad_to_Angle; 
-
-		double roll  = atan2(R_n2b(2,1),R_n2b(2,2))*Rad_to_Angle;
-		double pitch = -asin(R_n2b(2,0))*Rad_to_Angle;
-		double yaw   = atan2(R_n2b(1,0),R_n2b(0,0))*Rad_to_Angle; 
-		cout<< "ENU: roll "<<roll<<" pitch:  "<<pitch<<" yaw:  "<<yaw<<endl;
-		
-		return Eigen::Vector3d(roll,pitch,yaw);
-	}
+ 
 	Eigen::Vector3d Mahony_AHRS::getEulerAngle(void)
 	{
 		 

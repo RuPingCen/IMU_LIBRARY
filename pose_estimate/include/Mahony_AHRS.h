@@ -8,6 +8,8 @@
 #include <Eigen/Geometry>
 #include "TypeDefs.h"
 
+#include "Iir.h"
+
 #ifdef _WIN32
 #include "windows.h"
 #else 
@@ -28,13 +30,16 @@ public:
 
 	Eigen::Vector4d Run(const double& dt,const Eigen::Vector3d& gyro_m,
 			const Eigen::Vector3d& acc_m,const Eigen::Vector3d& mag_m);
+	Eigen::Vector4d Run2(const double& dt,const Eigen::Vector3d& gyro_m,
+			const Eigen::Vector3d& acc_m,const Eigen::Vector3d& mag_m);
 
 	void Mahony_Estimate(void);
 	void Mahony_Estimate2(void);
+	void Mahony_Estimate3(void);
 
 	void NewValues(const Eigen::Vector3d& gyro_m, const Eigen::Vector3d& acc_m, const Eigen::Vector3d& mag_m);
 	void paramsChange(Vector_2 PI, double dt);
-	Eigen::Vector3d quaternionToEuler(const Eigen::Vector4d& q); 
+	  
 	Eigen::Vector3d getEulerAngle(void);
 	Eigen::Vector4d getQuaternion(void);
 
@@ -56,6 +61,10 @@ private:
 	bool mbStopped;
 	bool mbStopRequested;
 	std::mutex mMutexStop;
+
+	//const int order = 4;
+	Iir::Butterworth::LowPass<4> F_LowPass;
+	Iir::Butterworth::HighPass<4> F_HighPass;
 };
 
 } //namesapce IMU

@@ -15,6 +15,8 @@
 using namespace std;
 namespace IMU
 {
+Eigen::Vector3d quaternionToEuler(const Eigen::Vector4d& q); 
+
 void Vect_to_SkewMat(Vector_3 Vector, Matrix_3 &Matrix);
 void Angular_to_Mat(Vector_3 Vector, Eigen::Matrix<double, 4, 4> &Matrix);
 //void Rotation_to_Qaut(Matrix_3 rotation, Eigen::Quaterniond &quat);
