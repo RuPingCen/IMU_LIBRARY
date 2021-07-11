@@ -477,9 +477,10 @@ void publish_IMU_Raw_Data(int flag)
 	msg.angular_velocity.y = wit_imu.gy*0.0010652;
 	msg.angular_velocity.z = wit_imu.gz*0.0010652;
 
-	msg.linear_acceleration.x = wit_imu.ax/32768.0f*4;
-	msg.linear_acceleration.y = wit_imu.ay/32768.0f*4;
-	msg.linear_acceleration.z = wit_imu.az/32768.0f*4;
+	// change to m/s^2       0.00119751 = 4*9.8/32768
+	msg.linear_acceleration.x = wit_imu.ax*0.00119751;
+	msg.linear_acceleration.y = wit_imu.ay*0.00119751;
+	msg.linear_acceleration.z = wit_imu.az*0.00119751;
 	pub.publish(msg);
 
 	msg_mag.magnetic_field.x = wit_imu.mx;
